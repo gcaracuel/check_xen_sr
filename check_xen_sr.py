@@ -96,7 +96,7 @@ def performancedata(sr_name, total, alloc, warning, critical, performancedata_fo
 
 def main(session, sr_name, warning, critical, performancedata_format):
 
-    	gb_factor=1073741824
+    gb_factor=1073741824
 	mb_factor=1024*1024
 
 	try:
@@ -113,9 +113,9 @@ def main(session, sr_name, warning, critical, performancedata_format):
 			sys.exit(2)
 
 	if sr:
-		sr_size          = session.xenapi.SR.get_physical_size(sr[0])
-		sr_phys_util     = session.xenapi.SR.get_physical_utilisation(sr[0])
-		sr_virtual_alloc = session.xenapi.SR.get_virtual_allocation(sr[0])
+		sr_size          = session.xenapi.SR.get_physical_size(sr[serv_num])
+		sr_phys_util     = session.xenapi.SR.get_physical_utilisation(sr[serv_num])
+		sr_virtual_alloc = session.xenapi.SR.get_virtual_allocation(sr[serv_num])
 
 		total_bytes_gb   = int(sr_size)      / gb_factor
 		total_bytes_mb   = int(sr_size)      / mb_factor
@@ -182,9 +182,9 @@ def main(session, sr_name, warning, critical, performancedata_format):
 
 
 if __name__ == "__main__":
-	if len(sys.argv) <> 7:
+	if len(sys.argv) < 7:
 		print "Usage:"
-		print sys.argv[0], " <XenServer poolmaster ip or fqdn> <username> <password> <sr name> <warning %> <critical %>"
+		print sys.argv[0], " <XenServer poolmaster ip or fqdn> <username> <password> <sr name> <warning %> <critical %> [<server_number>]"
 		sys.exit(1)
 	url = sys.argv[1]
 	username = sys.argv[2]
@@ -192,6 +192,11 @@ if __name__ == "__main__":
 	sr_name  = sys.argv[4]
 	warning  = sys.argv[5]
 	critical = sys.argv[6]
+
+	if len(sys.argv) == 8:   # OPTIONAL param
+		serv_num = int(sys.argv[7])
+	else:   # If optional param not present use the firs (maybe the only) SR found
+		serv_num = 0
 
 	# First acquire a valid session by logging in:
 	try:
