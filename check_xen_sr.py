@@ -113,10 +113,21 @@ def main(session, sr_name, warning, critical, performancedata_format):
 			sys.exit(2)
 
 	if sr:
-		sr_size          = session.xenapi.SR.get_physical_size(sr[serv_num])
-		sr_phys_util     = session.xenapi.SR.get_physical_utilisation(sr[serv_num])
-		sr_virtual_alloc = session.xenapi.SR.get_virtual_allocation(sr[serv_num])
-
+		if not UUID:
+			sr_size          = session.xenapi.SR.get_physical_size(sr[0])
+			sr_phys_util     = session.xenapi.SR.get_physical_utilisation(sr[0])
+			sr_virtual_alloc = session.xenapi.SR.get_virtual_allocation(sr[0])
+			sr_uuid			 = session.xenapi.SR.get_uuid(sr[0])
+		else:
+			for sr_item in sr:
+				sr_uuid = session.xenapi.SR.get_uuid(sr_item) 
+				if sr_uuid == UUID: 
+					sr_size          = session.xenapi.SR.get_physical_size(sr_item)
+					sr_phys_util     = session.xenapi.SR.get_physical_utilisation(sr_item)
+					sr_virtual_alloc = session.xenapi.SR.get_virtual_allocation(sr_item)
+			if not sr_size:
+				print "CRITICAL: Cant get SR, for the UUID given =", UUID
+				sys.exit(2)				
 		total_bytes_gb   = int(sr_size)      / gb_factor
 		total_bytes_mb   = int(sr_size)      / mb_factor
 		total_bytes_b    = int(sr_size)
@@ -184,7 +195,7 @@ def main(session, sr_name, warning, critical, performancedata_format):
 if __name__ == "__main__":
 	if len(sys.argv) < 7:
 		print "Usage:"
-		print sys.argv[0], " <XenServer poolmaster ip or fqdn> <username> <password> <sr name> <warning %> <critical %> [<server_number>]"
+		print sys.argv[0], " <XenServer poolmaster ip or fqdn> <username> <password> <sr name> <warning %> <critical %> [<UUID>]"
 		sys.exit(1)
 	url = sys.argv[1]
 	username = sys.argv[2]
@@ -194,9 +205,9 @@ if __name__ == "__main__":
 	critical = sys.argv[6]
 
 	if len(sys.argv) == 8:   # OPTIONAL param
-		serv_num = int(sys.argv[7])
+		UUID = sys.argv[7]
 	else:   # If optional param not present use the firs (maybe the only) SR found
-		serv_num = 0
+		UUID = None
 
 	# First acquire a valid session by logging in:
 	try:
